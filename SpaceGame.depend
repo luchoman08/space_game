@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1461945125 source:/home/usuario/Desktop/SpaceGame/main.cpp
+	<iostream>
+	<SFML/Graphics.hpp>
+	"GameManager.h"
+
+1461945697 /home/usuario/Desktop/SpaceGame/include/GameManager.h
+	<SFML/Graphics.hpp>
+
