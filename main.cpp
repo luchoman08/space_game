@@ -22,7 +22,7 @@ int main()
     while (app.isOpen())
     {
         // Process events
-        sf::Event event;
+        sf::Event event ;
         while (app.pollEvent(event))
         {
             // Close window : exit
@@ -30,19 +30,14 @@ int main()
                 app.close();
         }
 
-        float elapsedTime = deltaClock.getElapsedTime().asSeconds();
+        float elapsedTime = deltaClock.getElapsedTime().asMilliseconds();
 
-        if (elapsedTime > 0)
-        {
-            gameManager.UpdateGame(elapsedTime);
-            deltaClock.restart();
-        }
 
+         gameManager.UpdateGame(elapsedTime, event);
         // Clear screen
         app.clear();
 
         gameManager.DrawGame();
-
         // Update the window
         app.display();
     }
