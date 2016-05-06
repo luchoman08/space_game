@@ -3,6 +3,7 @@
 #include <vector>
 #include <SFML/Graphics.hpp>
 #include <time.h>
+#include "../src/Meteoro.hpp"
 class GameManager
 {
     public:
@@ -22,11 +23,16 @@ class GameManager
         void dibujarMisiles();
         void moverMisiles();
         void colisionMisilMeteoro();
+        bool colisionNaveMeteoro();
     protected:
     private:
+		int vidas ;
+		int puntos;
+		sf::Font font;
+		sf::Text text;
 
         sf::RenderWindow & renderWindow;
-        std::vector <sf::Sprite*> meteoritosSprites;
+        std::vector <Meteoro*> meteoritosSprites;
         std::vector <sf::Sprite*> explociones;
         std::vector <sf::Sprite*> misilSprites;
         sf::Texture backgroundImg;

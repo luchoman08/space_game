@@ -1,5 +1,7 @@
 #include "GameManager.h"
 #include <math.h>
+#include "Meteoro.hpp"
+#include <string>
 #include <iostream>
 GameManager::GameManager(sf::RenderWindow & appWindow) :
     renderWindow(appWindow)
@@ -21,6 +23,23 @@ void GameManager::moverMisiles()
 
 	}
 }
+bool GameManager::colisionNaveMeteoro()
+{
+	if(vidas == 0)
+	return false;
+	int numeroMeteoros=meteoritosSprites.size();
+	for(int c =0; c<numeroMeteoros; c++)
+	{
+		if (navePrincipalSprite.getGlobalBounds().intersects(meteoritosSprites.at(c)->Sprite.getGlobalBounds())){
+		vidas--;
+		text.setString("Vidas: " + std::to_string(vidas));
+		navePrincipalSprite.setPosition(700,520);
+		
+	}
+	
+	}
+	return true;
+}
 void GameManager::colisionMisilMeteoro(){
 	int numeroMisiles=misilSprites.size();
 	int numeroMeteoros=meteoritosSprites.size();
@@ -28,14 +47,20 @@ void GameManager::colisionMisilMeteoro(){
 	{
 		for(int c =0; c<numeroMeteoros; c++)
 	{
-		if (misilSprites.at(m)->getGlobalBounds().intersects(meteoritosSprites.at(c)->getGlobalBounds())){
-			explociones.push_back(meteoritosSprites.at(c));		
-		
-			meteoritosSprites.erase(meteoritosSprites.begin()+c);
+		if (misilSprites.at(m)->getGlobalBounds().intersects(meteoritosSprites.at(c)->Sprite.getGlobalBounds())){
+			
+		    meteoritosSprites.at(c)->puntos_vida--;
+		   
+			
 			misilSprites.erase(misilSprites.begin()+m);
 			numeroMisiles = misilSprites.size();
-			numeroMeteoros=meteoritosSprites.size();
-				c = numeroMeteoros;
+			if(meteoritosSprites.at(c)->puntos_vida==0){
+			meteoritosSprites.erase(meteoritosSprites.begin()+c);
+			puntos++;
+			
+		    }
+		    numeroMeteoros=meteoritosSprites.size();
+		    c = numeroMeteoros;
 			m = numeroMisiles;
 		}
 
@@ -56,7 +81,7 @@ void GameManager::crearMisil(int direccion, sf::Vector2f posicionInicial, float 
     misil->setPosition(posicionInicial.x  , posicionInicial.y);
     misil->setRotation(direccion);
     misilSprites.push_back(misil);
-    tiempoUltimoMisilLanzado+=1000;
+    tiempoUltimoMisilLanzado = deltaTime;
 	}
 }
 
@@ -74,7 +99,7 @@ void GameManager::DibujarAsteroides()
 	int numeroMeteoros=meteoritosSprites.size();
 	for(int i =0; i<numeroMeteoros; i++)
 	{
-		renderWindow.draw(*meteoritosSprites.at(i));
+		renderWindow.draw(meteoritosSprites.at(i)->Sprite);
 
 	}
 }
@@ -84,31 +109,20 @@ sf::Vector2f GameManager::colisionAsteroides(){
 	return posicionAdecuada;
 	
 }
-//~ sf::Vector2f GameManager::colisionAsteroides()
-//~ {
-	//~ bool tmp = true;
-	//~ int numeroMeteoros=meteoritosSprites.size();
-	//~ while(tmp){
-	//~ 
-		//~ for(int i =0; i<numeroMeteoros; i++)
-		//~ {
-			//~ if (boundingBox.intersects(otherBox))
-		//~ }
-	//~ }
-//~ }
+
 void GameManager::moverAsteroides()
 {	
 	int numeroMeteoros=meteoritosSprites.size();
 	for(int i =0; i<numeroMeteoros; i++)
 	{
 	    if(i%3==0)
-		meteoritosSprites.at(i)->move(0.3,0.3);
+		meteoritosSprites.at(i)->Sprite.move(0.3,0.3);
 		else
-		meteoritosSprites.at(i)->move(0.1,0.1);
+		meteoritosSprites.at(i)->Sprite.move(0.1,0.1);
 		if(i%2==0)
-		meteoritosSprites.at(i)->rotate(0.1);
+		meteoritosSprites.at(i)->Sprite.rotate(0.1);
 		else
-		meteoritosSprites.at(i)->rotate(-0.1);
+		meteoritosSprites.at(i)->Sprite.rotate(-0.1);
 	}
 }
 
@@ -117,20 +131,20 @@ bool GameManager::inicializarAsteroides(int numAsteroides)
 	
 	sf::Sprite* spriteTemporal;
     
-	for(int i=0; i< numAsteroides; i++)
+	for(int i=0;  numAsteroides > meteoritosSprites.size() ; i++)
 	{
 		 srand (time(NULL));
 		 
 		 if(i>0)
-		 srand ((int)meteoritosSprites.at(i-1)->getPosition().x * 100 * time(NULL));
+		 srand ((int)meteoritosSprites.at(i-1)->Sprite.getPosition().x * 100 * time(NULL));
 		 
-	     spriteTemporal = new sf::Sprite();
-		 spriteTemporal->setTexture(this->meteoritoImg,true);
-		 spriteTemporal->setScale(0.3,0.3);
-		 sf::FloatRect boundingBox = spriteTemporal->getGlobalBounds();
-		 spriteTemporal->setOrigin(rand() % 600 + (1+100*i), rand() % 400 + (1+100*i));
-		 spriteTemporal->setPosition(spriteTemporal->getOrigin());
-		 meteoritosSprites.push_back(spriteTemporal);	
+	     Meteoro* meteoroTemporal = new Meteoro();
+		 meteoroTemporal->Sprite.setTexture(this->meteoritoImg,true);
+		 meteoroTemporal->Sprite.setScale((double)(rand() % 6 + 3)/10,(double)(rand() % 6 + 3)/10);
+		 sf::FloatRect boundingBox = meteoroTemporal->Sprite.getGlobalBounds();
+	     meteoroTemporal->Sprite.setOrigin(rand() % 800 + 100, rand() % 600 + 100);
+		 meteoroTemporal->Sprite.setPosition(meteoroTemporal->Sprite.getOrigin());
+		 meteoritosSprites.push_back(meteoroTemporal);	
 	}
 }
 bool GameManager::Initialize()
@@ -143,16 +157,25 @@ bool GameManager::Initialize()
         return false;
     if (!backgroundImg.loadFromFile("graphics/Background.png"))
         return false;  
-     
+    puntos =0; 
     inicializarAsteroides(5);
     tiempoUltimoMisilLanzado=(float)0;
     backgroundSprite.setTexture(backgroundImg, true);
     navePrincipalSprite.setTexture(navePrincipalImg, true);
     backgroundSprite.setScale(0.5f, 0.5f);
-    
+    this->vidas = 3;
     navePrincipalSprite.setScale(0.7f,0.7f);
     navePrincipalSprite.setOrigin(52,45);
 	navePrincipalSprite.setPosition(700,520);
+	if(!font.loadFromFile("fonts/arial.ttf"))
+	std::cout<<"holi shit"<<std::endl;
+	// Create a text
+	text.setFont(font); // font is a sf::Font
+    text.setString("Vidas: " + std::to_string(vidas));
+	text.setCharacterSize(30);
+	text.setStyle(sf::Text::Bold);
+	text.setColor(sf::Color::Blue);
+
     return true;
 }
 
@@ -165,7 +188,8 @@ void GameManager::UpdateGame(float deltaTime, sf::Event event)
 {
 moverAsteroides();
 moverMisiles();
-	
+inicializarAsteroides(5);
+colisionNaveMeteoro();
 if (event.type == sf::Event::KeyPressed)
 {
 		teclasAccion(event, deltaTime);        
@@ -195,11 +219,25 @@ void GameManager::teclasAccion(sf::Event event, float deltatime)
 
 void GameManager::DrawGame()
 {
-
+   if(colisionNaveMeteoro()){
     colisionMisilMeteoro();
     renderWindow.draw(backgroundSprite);
     renderWindow.draw(navePrincipalSprite);
     DibujarAsteroides();
     dibujarMisiles();
+    renderWindow.draw(text);
     renderWindow.display();
+}
+else{
+backgroundImg.loadFromFile("graphics/game_over1.bmp");
+backgroundSprite.setPosition(sf::Vector2f(300, 300));
+renderWindow.draw(backgroundSprite);
+text.setPosition(sf::Vector2f(0, 0));
+text.setString("Total puntos: " + std::to_string(puntos));
+renderWindow.draw(text);
+renderWindow.display();
+
+
+}
+
 }
