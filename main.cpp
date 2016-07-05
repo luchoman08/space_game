@@ -14,7 +14,7 @@ int main()
         std::cout << "Failure loading graphics." << std::endl;
         return EXIT_FAILURE;
     }
-
+	app.setFramerateLimit (150); // Limit to 60 frames per second
     // Clock used to calculate the delta time
     sf::Clock deltaClock;
 
@@ -37,7 +37,7 @@ int main()
         // Clear screen
         app.clear();
 
-        gameManager.DrawGame();
+        gameManager.DrawGame(elapsedTime);
         // Update the window
         app.display();
     }
