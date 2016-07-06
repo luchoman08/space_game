@@ -12,10 +12,13 @@
 class GameManager
 {
     public:
+		MenuInicial *menuPausa;
 		MenuInicial *menuInicial;
+		MenuInicial *menuFinal;
+		MenuInicial *opciones;
 		void actualizarBarraVidaPrincipal();
-		int estado; //0 si esta normal, -1 si la nave perdio las vidas, 2 si esta pausado, 3 si esta en el menu inicial
-		int numAsteroides=5;
+		int estado; //0 si esta normal, -1 si la nave perdio las vidas, 3 si esta pausado, 2 si esta en el menu inicial, 4 menu de opciones, 5 cantidad naves, 6 cantidad de meteoros
+		int numAsteroides;
 		int cantNavesEnemigas;
 		void inicializarNaves(float deltaTime);
 		int inicializarNavePrincipal(float deltaTime);
@@ -27,6 +30,11 @@ class GameManager
         bool inicializarAsteroides(int cantAsteroides, float deltaTime);
         bool posicionSinChocar(sf::FloatRect elemento);//busca si el elemento  colisiona con alguna nave o meteoro
         bool Initialize(float deltaTime);
+        /*eventos necesarios para eliminar los objetos  y reiniciar la partida*/
+        void eliminarNaves();
+        void eliminarMeteoros();
+        void eliminarMisiles();
+        void eliminarExplociones();
         void FreeResources();
         void teclasAccion(sf::Event event ,float deltaTime);
         void UpdateGame(float deltaTime,  sf::Event event);
@@ -55,6 +63,8 @@ class GameManager
 		bool colisionMeteoroMeteoro();//chequea las colisiones entre todos los meteoros
         float deltaTime;
         void inicializarMenuPausa();
+        void inicializarMenuInicial();
+        void inicializarMenuOpciones();
         sf::Vector2f teletransportarDimencion1(sf::Vector2f poscionActual, int dimencion);//retorna a los objetos a la primera dimencion con su misma direccion
     protected:
     

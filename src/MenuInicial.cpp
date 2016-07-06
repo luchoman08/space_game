@@ -10,7 +10,7 @@ MenuInicial::MenuInicial(float width, float height)
 
 	this->width=width;
 	this->height=height;
-	selectedItemIndex = 0;
+	selectedItemIndex = 1;
 	
 }
 void MenuInicial::inicializar()
@@ -22,11 +22,17 @@ void MenuInicial::inicializar()
 	for(int i = 0; i < textos.size();i++){
 	sf::Text* tmp=new sf::Text;
 	tmp->setFont(font);
+	if(i==0){
+	tmp->setColor(sf::Color::Red);
+	}
+	else{
 	tmp->setColor(sf::Color::White);
+	}
 	tmp->setString(textos.at(i));
-	tmp->setPosition(sf::Vector2f(width / 2, height / ((textos.size() + 1) * (i+1))));
+	tmp->setPosition(sf::Vector2f(width / 2, height / (textos.size() + 1 )*(i+1)));
 	menuVector.push_back(tmp);
 	}
+	
 	selectedItemIndex = 0;
 }
 
@@ -49,7 +55,7 @@ void MenuInicial::MoveUp()
 		menuVector.at(selectedItemIndex)->setColor(sf::Color::White);
 		selectedItemIndex=(selectedItemIndex-1);
 		if(selectedItemIndex<0)
-		selectedItemIndex=1;
+		selectedItemIndex=menuVector.size()-1;
 		menuVector.at(selectedItemIndex)->setColor(sf::Color::Red);
 	
 }

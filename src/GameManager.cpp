@@ -9,8 +9,8 @@
 GameManager::GameManager(sf::RenderWindow & appWindow) :
     renderWindow(appWindow)
 {
-	this->navePrincipal= new Nave();		
-	
+			
+	this->estado=2;
 }
 
 GameManager::~GameManager()
@@ -305,7 +305,30 @@ void GameManager::colisionMisilMeteoro(float deltaTime){
 
 	}
 }
-
+void GameManager::eliminarNaves(){
+	for (int i =0; i<naves.size(); i++)
+	{
+		this->naves.erase(naves.begin()+i);
+	}
+}
+void GameManager::eliminarMeteoros(){
+	for (int i =0; i<meteoritosSprites.size(); i++)
+	{
+		this->meteoritosSprites.erase(meteoritosSprites.begin()+i);
+	}
+}
+void GameManager::eliminarMisiles(){
+	for (int i =0; i<misiles.size(); i++)
+	{
+		this->misiles.erase(misiles.begin()+i);
+	}
+}
+void GameManager::eliminarExplociones(){
+	for (int i =0; i<explociones.size(); i++)
+	{
+		this->explociones.erase(explociones.begin()+i);
+	}
+}
 void GameManager::crearMisil(Nave& nave, int duracion, int tipoNaveLanza, double velocidad, int direccion, sf::Vector2f posicionInicial, float deltaTime){
 	if(deltaTime ==0)
 	nave.tiempoUltimoMisilLanzado = deltaTime;
@@ -495,18 +518,30 @@ int GameManager::inicializarNavePrincipal(float deltaTime){
 	navePrincipal->posicionInicial=sf::Vector2f(700,500);
 }
 void GameManager::inicializarMenuPausa(){
+	this->menuPausa=new MenuInicial((float)800,(float)600);
+	this->menuPausa->adicionarTexto("Continuar");
+	this->menuPausa->adicionarTexto("Reiniciar Partida");
+	this->menuPausa->adicionarTexto("Terminar Partida");
+	this->menuPausa->adicionarTexto("Salir");
+	this->menuPausa->inicializar();
+}
+void GameManager::inicializarMenuInicial(){
 	this->menuInicial=new MenuInicial((float)800,(float)600);
-	this->menuInicial->adicionarTexto("Continuar");
-	this->menuInicial->adicionarTexto("Terminar Partida");
+	this->menuInicial->adicionarTexto("Jugar");
+	this->menuInicial->adicionarTexto("Opciones");
+	this->menuInicial->adicionarTexto("Salir");
 	this->menuInicial->inicializar();
 }
 bool GameManager::Initialize(float deltaTime)
 {
 	
+	this->navePrincipal= new Nave();
 	inicializarMenuPausa();
-	this->estado=0;
+	inicializarMenuInicial();
+	
 	this->puntosNaves=0;
 	this->cantNavesEnemigas=2;
+	this->numAsteroides=5;
 	this->pantalla.top=0;
 	this->pantalla.left=0;
 	this->pantalla.width=800;
@@ -527,7 +562,8 @@ bool GameManager::Initialize(float deltaTime)
         return false;    
     if (!naveEnemigaImg.loadFromFile("graphics/Spaceship03.png"))
         return false;   
-    puntosAsteroide =0; 
+    puntosAsteroide = 0; 
+    puntosNaves = 0;
     planetoideSprite.setTexture(planetoideImg, true);
     planetoideSprite.setPosition(-100, 200);
     backgroundSprite.setTexture(backgroundImg, true);
@@ -635,6 +671,44 @@ void GameManager::teclasAccion(sf::Event event, float deltatime)
 				switch (event.key.code)
 				{
 				case 73:
+					this->menuPausa->MoveUp();
+					usleep(150000);
+					break;
+
+				case 74:
+					this->menuPausa->MoveDown();
+					usleep(150000);
+					break;
+	
+				case 37:
+					switch (this->menuPausa->GetPressedItem())
+					{
+					case 0:
+						this->estado=0;
+						break;
+					case 1:
+						eliminarNaves();
+						eliminarMeteoros();
+						eliminarMisiles();
+						eliminarExplociones();
+						this->Initialize(deltaTime);
+						this->estado=0;
+						break;
+					case 2:
+						this->estado=-1;
+						break;
+					default:break;
+				}
+
+			
+	}
+}
+/*menu inicial*/
+	if(this->estado==2){
+		
+				switch (event.key.code)
+				{
+				case 73:
 					this->menuInicial->MoveUp();
 					usleep(150000);
 					break;
@@ -648,12 +722,18 @@ void GameManager::teclasAccion(sf::Event event, float deltatime)
 					switch (this->menuInicial->GetPressedItem())
 					{
 					case 0:
+						eliminarNaves();
+						eliminarMeteoros();
+						eliminarMisiles();
+						eliminarExplociones();
+						this->Initialize(deltaTime);
 						this->estado=0;
-						std::cout << "Play button has been pressed" << std::endl;
 						break;
 					case 1:
+						this->estado=4;
+						break;
+					case 2:
 						this->estado=-1;
-						std::cout << "Option button has been pressed" << std::endl;
 						break;
 					default:break;
 				}
@@ -661,6 +741,8 @@ void GameManager::teclasAccion(sf::Event event, float deltatime)
 			
 	}
 }
+
+
 }
 void GameManager::DrawGame(float deltaTime)
 {
@@ -678,12 +760,17 @@ void GameManager::DrawGame(float deltaTime)
 
   if(this->estado==3){
     renderWindow.draw(backgroundSprite);
-	this->menuInicial->draw(renderWindow);
+	this->menuPausa->draw(renderWindow);
 	renderWindow.draw(planetoideSprite);
     renderWindow.display();
 }
 
-
+  if(this->estado==2){
+    renderWindow.draw(backgroundSprite);
+	this->menuInicial->draw(renderWindow);
+	renderWindow.draw(planetoideSprite);
+    renderWindow.display();
+}
 	if(this->estado==-1){
 	renderWindow.draw(backgroundSprite);
 	dibujarExplociones(deltaTime);
