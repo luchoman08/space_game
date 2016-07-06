@@ -8,7 +8,7 @@ class Misil:public GameObject{
 	
 	public:
 	Misil();
-	Misil(Nave* naveCreadora, int tipo, float duracion, double aceleracion, float hora_creacion);
+	Misil(Nave* naveCreadora, int tipo, float duracion, double velocidad, float hora_creacion);
 	float hora_creacion;
 	float duracion; //tiempo en milisegundos que durara el misil dando vueltas	
 	int tipo;//1 si es de la nave principal, 2 si es de la nave enemiga

@@ -8,17 +8,25 @@ MenuInicial::MenuInicial(float width, float height)
 		// handle error
 	}
 
-	menu[0].setFont(font);
-	menu[0].setColor(sf::Color::Red);
-	menu[0].setString("Continuar");
-	menu[0].setPosition(sf::Vector2f(width / 2, height / (MAX_NUMBER_OF_ITEMS + 1) * 1));
-
-	menu[1].setFont(font);
-	menu[1].setColor(sf::Color::White);
-	menu[1].setString("Terminar Partida");
-	menu[1].setPosition(sf::Vector2f(width / 2, height / (MAX_NUMBER_OF_ITEMS + 1) * 2));
-
-
+	this->width=width;
+	this->height=height;
+	selectedItemIndex = 0;
+	
+}
+void MenuInicial::inicializar()
+{
+	if (!font.loadFromFile("fonts/arial.ttf"))
+	{
+		// handle error
+	}
+	for(int i = 0; i < textos.size();i++){
+	sf::Text* tmp=new sf::Text;
+	tmp->setFont(font);
+	tmp->setColor(sf::Color::White);
+	tmp->setString(textos.at(i));
+	tmp->setPosition(sf::Vector2f(width / 2, height / ((textos.size() + 1) * (i+1))));
+	menuVector.push_back(tmp);
+	}
 	selectedItemIndex = 0;
 }
 
@@ -29,28 +37,32 @@ MenuInicial::~MenuInicial()
 
 void MenuInicial::draw(sf::RenderWindow &window)
 {
-	for (int i = 0; i < MAX_NUMBER_OF_ITEMS; i++)
+	for (int i = 0; i < menuVector.size(); i++)
 	{
-		window.draw(menu[i]);
+		window.draw(*menuVector.at(i));
 	}
 }
 
 void MenuInicial::MoveUp()
 {
 
-		menu[selectedItemIndex].setColor(sf::Color::White);
+		menuVector.at(selectedItemIndex)->setColor(sf::Color::White);
 		selectedItemIndex=(selectedItemIndex-1);
 		if(selectedItemIndex<0)
 		selectedItemIndex=1;
-		menu[selectedItemIndex].setColor(sf::Color::Red);
+		menuVector.at(selectedItemIndex)->setColor(sf::Color::Red);
 	
 }
 
 void MenuInicial::MoveDown()
 {
 	
-		menu[selectedItemIndex].setColor(sf::Color::White);
-		selectedItemIndex=(selectedItemIndex+1)%(MAX_NUMBER_OF_ITEMS);
-		menu[selectedItemIndex].setColor(sf::Color::Red);
+		menuVector.at(selectedItemIndex)->setColor(sf::Color::White);
+		selectedItemIndex=(selectedItemIndex+1)%(menuVector.size());
+		menuVector.at(selectedItemIndex)->setColor(sf::Color::Red);
 	
+}
+
+void MenuInicial::adicionarTexto(std::string texto){
+	this->textos.push_back(texto);
 }

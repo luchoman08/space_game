@@ -8,36 +8,39 @@
 #include "Misil.hpp"
 #include "ObjetoExplocion.hpp"
 #include "MenuInicial.hpp"
+#include "BarraProgreso.hpp"
 class GameManager
 {
     public:
 		MenuInicial *menuInicial;
+		void actualizarBarraVidaPrincipal();
 		int estado; //0 si esta normal, -1 si la nave perdio las vidas, 2 si esta pausado, 3 si esta en el menu inicial
-		int numAsteroides=3;
+		int numAsteroides=5;
 		int cantNavesEnemigas;
-		void inicializarNaves();
-		int inicializarNavePrincipal();
+		void inicializarNaves(float deltaTime);
+		int inicializarNavePrincipal(float deltaTime);
 		void moverNaves(float deltaTime); //mueve, elimina y lanza los misiles de las nave enemigas y detecta colisiones con los misiles
 		void dibujarNaves();
 		double direccionPuntoPunto(sf::Vector2f a, sf::Vector2f b); //retorna el angulo de la direccion qeu deberia seguir a para apuntar a b
         GameManager(sf::RenderWindow & appWindow);
         virtual ~GameManager();
-        bool inicializarAsteroides(int cantAsteroides);
+        bool inicializarAsteroides(int cantAsteroides, float deltaTime);
         bool posicionSinChocar(sf::FloatRect elemento);//busca si el elemento  colisiona con alguna nave o meteoro
-        bool Initialize();
+        bool Initialize(float deltaTime);
         void FreeResources();
         void teclasAccion(sf::Event event ,float deltaTime);
         void UpdateGame(float deltaTime,  sf::Event event);
         void DrawGame(float deltaTime);
         void DibujarAsteroides();
-        void moverAsteroides();//mueve los asteroides, los remueve si estan en una misma posicion que otro asteroide
+        void moverAsteroides(float deltaTime);//mueve los asteroides, los remueve si estan en una misma posicion que otro asteroide
         sf::Vector2f colisionAsteroides();
         void crearMisil(Nave& nave, int duracion, int tipoNaveLanza, double aceleracion, int direccion, sf::Vector2f posicionInicial, float deltaTime);
         void dibujarMisiles();
         void dibujarExplociones(float deltatime);
-        void moverMisiles(); //mueve y elimina los misiles
+        void moverMisiles(float deltaTime); //mueve y elimina los misiles
         void colisionMisilMeteoro(float deltaTime);//remueve con explocion los meteoros que ya n
-        void moverNave(Nave& nave);
+        void moverNave(Nave& nave, float deltaTime);
+        void nuevaExplocion(float currentTime, int tipo, sf::Sprite sprite);
         bool colisionNaveMeteoro(float deltaTime, Nave& nave);
         bool colisionNaveNave(float deltaTime);
         /* este metodo devuelve un entero si el meteoro se sale de la pantalla
@@ -48,16 +51,20 @@ class GameManager
          * si ha exedido el limite izquierdo retorna 4*/
         int  limitePantalla(sf::FloatRect rectangulo); //retorna la dimencion en la que se encuentra
 		void colisionMisilesNave(float deltaTime, Nave& nave);
+		void dibujarBarra();//dibuja la barra de vidas de la nave principal
 		bool colisionMeteoroMeteoro();//chequea las colisiones entre todos los meteoros
         float deltaTime;
+        void inicializarMenuPausa();
         sf::Vector2f teletransportarDimencion1(sf::Vector2f poscionActual, int dimencion);//retorna a los objetos a la primera dimencion con su misma direccion
     protected:
     
     private:
 
 		int puntosAsteroide;
+		int puntosNaves;//la cantidad de naves exterminadas
 		sf::Font font;
 		sf::Text text;
+		sf::Text text2;
 		Nave* navePrincipal;
         sf::RenderWindow & renderWindow;
         std::vector <Meteoro*> meteoritosSprites;
@@ -71,6 +78,7 @@ class GameManager
         std::vector <ObjetoExplocion*> explociones;
         /*rectangulo que representa la pantalla*/
 		sf::FloatRect pantalla;
+		BarraProgreso* barraVidaNavePrincipal;
 		sf::FloatRect* dimencion2;
 		sf::FloatRect* dimencion3;
 		sf::FloatRect* dimencion4;

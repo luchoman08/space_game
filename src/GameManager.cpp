@@ -18,9 +18,11 @@ GameManager::~GameManager()
     //dtor
 }
 
+void GameManager::actualizarBarraVidaPrincipal(){
+	
+}
 
-
-void GameManager::moverMisiles()
+void GameManager::moverMisiles(float deltaTime)
 {
 	int numeroMisiles=misiles.size();
 	for(int i =0; i < numeroMisiles; i++)
@@ -30,8 +32,11 @@ void GameManager::moverMisiles()
 	{
 		misiles.at(i)->sprite.setPosition(this->teletransportarDimencion1(misiles.at(i)->sprite.getPosition(), dimencion));
 	}
-		misiles.at(i)->sprite.move(misiles.at(i)->aceleracion* cos((misiles.at(i)->sprite.getRotation())*3.14159265/180),
+	/*
+	 * 	misiles.at(i)->sprite.move(misiles.at(i)->aceleracion* cos((misiles.at(i)->sprite.getRotation())*3.14159265/180),
 								  misiles.at(i)->aceleracion*sin((misiles.at(i)->sprite.getRotation())*3.14159265/180));
+	 * */
+		misiles.at(i)->Update(deltaTime);
 	
 	if(misiles.at(i)->duracion < (this->deltaTime - misiles.at(i)->hora_creacion)){
 		misiles.erase(misiles.begin()+i);
@@ -56,7 +61,7 @@ void GameManager::moverNaves(float deltaTime){
 			 if(1==limitePantalla(this->navePrincipal->sprite.getGlobalBounds())&& 1 == limitePantalla(naves.at(i)->sprite.getGlobalBounds())){
 		 naves.at(i)->sprite.setRotation(direccionPuntoPunto(navePrincipal->sprite.getPosition(), naves.at(i)->sprite.getPosition()));
 		}
-		 moverNave(*naves.at(i));
+		 moverNave(*naves.at(i), deltaTime);
 		 colisionNaveMeteoro(deltaTime, *naves.at(i));
 		 crearMisil(*(naves.at(i)), 5000, 2, 0.5, naves.at(i)->sprite.getRotation(), naves.at(i)->sprite.getPosition(), deltaTime);
 		}
@@ -70,7 +75,7 @@ double GameManager::direccionPuntoPunto(sf::Vector2f a, sf::Vector2f b){
 						/
 					(a.x - (double)b.x)))*180/M_PI;
 }
-void GameManager::inicializarNaves(){
+void GameManager::inicializarNaves(float deltaTime){
 	
 	
 	
@@ -80,7 +85,12 @@ void GameManager::inicializarNaves(){
 		 srand ((int)naves.at(i-1)->sprite.getPosition().x * 100 * time(NULL));
 		 
 		Nave* tmp = new Nave(3,3000);
-		tmp->aceleracion=0.8;
+		tmp->aceleracion=0;
+		tmp->ancho=41;
+		tmp->alto=48;
+		tmp->actualizarPeso();
+		tmp->hora_creacion=deltaTime;
+		tmp->velocidad=0.5;
 		tmp->tipo = 2;
 		tmp->direccion=rand() % 360 - 0 ;
 		tmp->imagen=naveEnemigaImg;
@@ -88,7 +98,7 @@ void GameManager::inicializarNaves(){
 		do{
 		tmp->sprite.setPosition((rand() % 900) + 0, (rand() % 600) + 0);
 	}while(!posicionSinChocar(tmp->sprite.getGlobalBounds()));
-	
+	    tmp->posicionInicial=tmp->sprite.getPosition();
 		tmp->sprite.setOrigin(sf::Vector2f(22,21));
 		 tmp->sprite.setRotation(direccionPuntoPunto(navePrincipal->sprite.getPosition(), tmp->sprite.getPosition()));
 		
@@ -130,14 +140,24 @@ bool GameManager::colisionMeteoroMeteoro(){
 		for(int m2 =m1+1; m2<meteoritosSprites.size(); m2++)
 		{
 			if (meteoritosSprites.at(m1)!=meteoritosSprites.at(m2) && meteoritosSprites.at(m1)->sprite.getGlobalBounds().intersects(meteoritosSprites.at(m2)->sprite.getGlobalBounds())){
+				meteoritosSprites.at(m1)->mover(5,meteoritosSprites.at(m2)->direccion);
+				meteoritosSprites.at(m2)->mover(5,meteoritosSprites.at(m1)->direccion);
 				meteoritosSprites.at(m1)->direccion=meteoritosSprites.at(m2)->direccion;
+				meteoritosSprites.at(m1)->puntos_vida-=0.5;
 				meteoritosSprites.at(m2)->direccion-=180;
-				meteoritosSprites.at(m1)->sprite.move(meteoritosSprites.at(m1)->aceleracion*10*cos(meteoritosSprites.at(m1)->direccion*3.14159265/180),meteoritosSprites.at(m1)->aceleracion*10*sin(meteoritosSprites.at(m1)->direccion*3.14159265/180));
-				meteoritosSprites.at(m2)->sprite.move(meteoritosSprites.at(m2)->aceleracion*10*cos(meteoritosSprites.at(m2)->direccion*3.14159265/180),meteoritosSprites.at(m2)->aceleracion*10*sin(meteoritosSprites.at(m2)->direccion*3.14159265/180));
+				
+				Meteoro tmp = *meteoritosSprites.at(m1);
+				//meteoritosSprites.at(m1)->recibirImpulso(meteoritosSprites.at(m2)->peso, meteoritosSprites.at(m2)->velocidad);
+				//meteoritosSprites.at(m2)->recibirImpulso(tmp.peso, tmp.velocidad);
 
 			}
 		}
 	}	
+}
+
+void GameManager::nuevaExplocion(float deltaTime, int tipo, sf::Sprite sprite){
+		ObjetoExplocion* objtmp = new ObjetoExplocion(deltaTime, tipo, sprite);
+		explociones.push_back(objtmp);
 }
 
 bool GameManager::colisionNaveNave(float deltaTime)
@@ -148,13 +168,9 @@ bool GameManager::colisionNaveNave(float deltaTime)
 	{
 		if(navePrincipal->sprite.getGlobalBounds().intersects(naves.at(n1)->sprite.getGlobalBounds())){
 		naves.at(n1)->aceleracion=0;
-		navePrincipal->vidas-=1;
-		text.setString("Vidas: " + std::to_string(navePrincipal->vidas));
-		naves.at(n1)->sprite.setOrigin(sf::Vector2f(22,22));
-		ObjetoExplocion* objtmp = new ObjetoExplocion(deltaTime);
-		objtmp->sprite=naves.at(n1)->sprite;
-		explociones.push_back(objtmp);
-		
+		navePrincipal->vidas-=1;	
+		nuevaExplocion(deltaTime, 0, naves.at(n1)->sprite);
+		this->puntosNaves++;
 		naves.erase(naves.begin()+n1);
 		return false;
 		
@@ -178,9 +194,7 @@ bool GameManager::colisionNaveNave(float deltaTime)
 bool GameManager::colisionNaveMeteoro(float deltaTime, Nave& nave)
 {
 	if(nave.vidas == 0 && this->estado == 0){
-	ObjetoExplocion* objtmp = new ObjetoExplocion(deltaTime);
-	objtmp->sprite=nave.sprite;
-	explociones.push_back(objtmp);
+	nuevaExplocion(deltaTime, 0, nave.sprite);
 	nave.vidas=-1;
 	nave.aceleracion=0;
 	if(&nave == navePrincipal){
@@ -192,14 +206,22 @@ bool GameManager::colisionNaveMeteoro(float deltaTime, Nave& nave)
 	for(int c =0; c<numeroMeteoros; c++)
 	{
 		if (nave.sprite.getGlobalBounds().intersects(meteoritosSprites.at(c)->sprite.getGlobalBounds())){
+		nave.mover(10, meteoritosSprites.at(c)->direccion);	
 		double tmp=meteoritosSprites.at(c)->direccion;
 		meteoritosSprites.at(c)->direccion=nave.direccion;
-		nave.aceleracion=meteoritosSprites.at(c)->aceleracion;
+		//nave.velocidad=meteoritosSprites.at(c)->velocidad;
+		nave.recibirImpulso(meteoritosSprites.at(c)->peso, meteoritosSprites.at(c)->velocidad);
 		nave.direccion-=180;
-		nave.sprite.move(nave.aceleracion*10*cos(nave.direccion*3.14159265/180),nave.aceleracion*10*sin(nave.direccion*3.14159265/180));
+		
+		/*nave.sprite.move(nave.aceleracion*10*cos(nave.direccion*3.14159265/180),nave.aceleracion*10*sin(nave.direccion*3.14159265/180));
 		meteoritosSprites.at(c)->sprite.move(meteoritosSprites.at(c)->aceleracion*cos((meteoritosSprites.at(c)->direccion)*3.14159265/180),
-		meteoritosSprites.at(c)->aceleracion*sin((meteoritosSprites.at(c)->direccion)*3.14159265/180));
+		meteoritosSprites.at(c)->aceleracion*sin((meteoritosSprites.at(c)->direccion)*3.14159265/180));*/
 		nave.vidas--;
+		meteoritosSprites.at(c)->puntos_vida-=0.3;
+		if(meteoritosSprites.at(c)->puntos_vida<=0){
+			nuevaExplocion(deltaTime, 1, meteoritosSprites.at(c)->sprite);
+			this->puntosAsteroide++;
+		}
 		if(&nave==this->navePrincipal)
 		text.setString("Vidas: " + std::to_string(nave.vidas));
 	
@@ -230,12 +252,13 @@ void GameManager::colisionMisilesNave(float deltaTime, Nave& nave){
 			numeroMisiles = misiles.size();
 			if(nave.vidas<=0){
 			
-			if(&nave!=navePrincipal)
-			nave.sprite.setOrigin(sf::Vector2f(22,24));
-			
-			ObjetoExplocion *objetoTmp = new ObjetoExplocion(deltaTime);
-			objetoTmp->sprite=nave.sprite;
-			this->explociones.push_back(objetoTmp);						
+				if(&nave!=navePrincipal){
+				nuevaExplocion(deltaTime, 0 , nave.sprite);	
+				this->puntosNaves++;
+				}
+				else{
+				nuevaExplocion(deltaTime, 1 , nave.sprite);	
+				}
 		    }
 			m = numeroMisiles;
 		}
@@ -259,10 +282,10 @@ void GameManager::colisionMisilMeteoro(float deltaTime){
 			
 			
 			if(meteoritosSprites.at(c)->puntos_vida<=0){
-			ObjetoExplocion *objetoTmp = new ObjetoExplocion(deltaTime);
-			objetoTmp->sprite=meteoritosSprites.at(c)->sprite;
-			this->explociones.push_back(objetoTmp);
-			meteoritosSprites.erase(meteoritosSprites.begin()+c);			
+			nuevaExplocion(deltaTime, 1, meteoritosSprites.at(c)->sprite);
+			meteoritosSprites.erase(meteoritosSprites.begin()+c);	
+			
+			if(misiles.at(m)->tipo==1)		
 			puntosAsteroide++;
 						
 		    }
@@ -283,21 +306,23 @@ void GameManager::colisionMisilMeteoro(float deltaTime){
 	}
 }
 
-void GameManager::crearMisil(Nave& nave, int duracion, int tipoNaveLanza, double aceleracion, int direccion, sf::Vector2f posicionInicial, float deltaTime){
+void GameManager::crearMisil(Nave& nave, int duracion, int tipoNaveLanza, double velocidad, int direccion, sf::Vector2f posicionInicial, float deltaTime){
 	if(deltaTime ==0)
 	nave.tiempoUltimoMisilLanzado = deltaTime;
 	if(nave.tiempoUltimoMisilLanzado + nave.velocidadRecargaMetralla < deltaTime)
 	{
-	Misil* misil = new Misil(navePrincipal, tipoNaveLanza, duracion, aceleracion+2, this->deltaTime); //arranca con minimo 2 de aceleracion, si ya se ha acelerado 
+	Misil* misil = new Misil(navePrincipal, tipoNaveLanza, duracion, velocidad+2, this->deltaTime); //arranca con minimo 2 de aceleracion, si ya se ha acelerado 
 	misil->imagen=proyectilImg;
 	switch(tipoNaveLanza){
 		case 1: misil->sprite.setTexture(proyectilImg,true);break;
 		case 2: misil->sprite.setTexture(proyectilEnemigoImg,true);break;
 	}
-
+	misil->hora_creacion = deltaTime;
     misil->sprite.setScale(0.5f, 0.5f);
     misil->sprite.setPosition(posicionInicial.x  , posicionInicial.y);
+    misil->posicionInicial=sf::Vector2f(posicionInicial.x  , posicionInicial.y);
     misil->sprite.setRotation(direccion);
+    misil->direccion=direccion;
     misiles.push_back(misil);
     nave.tiempoUltimoMisilLanzado = deltaTime;
 	}
@@ -386,7 +411,7 @@ sf::Vector2f GameManager::teletransportarDimencion1(sf::Vector2f posicionActual,
 		}
 	
 }
-void GameManager::moverAsteroides()
+void GameManager::moverAsteroides(float deltaTime)
 {	
 	
 	int numeroMeteoros=meteoritosSprites.size();
@@ -396,11 +421,10 @@ void GameManager::moverAsteroides()
 		int dimencion = this->limitePantalla(meteoritosSprites.at(i)->sprite.getGlobalBounds());
 		
 		if(dimencion!=1){
-			meteoritosSprites.at(i)->sprite.setPosition(teletransportarDimencion1(meteoritosSprites.at(i)->sprite.getPosition(),dimencion));
+			meteoritosSprites.at(i)->sprite.setPosition(teletransportarDimencion1(meteoritosSprites.at(i)->sprite.getPosition(),dimencion));					
 		}
 		
-		meteoritosSprites.at(i)->sprite.move(meteoritosSprites.at(i)->aceleracion*cos((meteoritosSprites.at(i)->direccion)*3.14159265/180),
-								   meteoritosSprites.at(i)->aceleracion*sin((meteoritosSprites.at(i)->direccion)*3.14159265/180));	
+		meteoritosSprites.at(i)->Update(deltaTime);						   
 		//eliminar asteroides
 		  if(meteoritosSprites.at(i)->puntos_vida<=0){	
 		meteoritosSprites.erase(meteoritosSprites.begin()+i);
@@ -410,62 +434,79 @@ void GameManager::moverAsteroides()
 	}
 }
 
-bool GameManager::inicializarAsteroides(int numAsteroides)
+bool GameManager::inicializarAsteroides(int numAsteroides, float deltaTime)
 {
 	
 	sf::Sprite* spriteTemporal;
     
 	for(int i=0;  numAsteroides > meteoritosSprites.size() ; i++)
 	{
-		 srand (time(NULL));
+		srand (time(NULL));
 		 
-		 if(i>0)
-		 srand ((int)meteoritosSprites.at(i-1)->sprite.getPosition().x * 100 * time(NULL));
+		if(i>0)
+		srand ((int)meteoritosSprites.at(i-1)->sprite.getPosition().x * 100 * time(NULL));
 		 
-	     Meteoro* meteoroTemporal = new Meteoro();
-	     meteoroTemporal->imagen.loadFromFile("graphics/Asteroid01.png");
-		 meteoroTemporal->sprite.setTexture(meteoroTemporal->imagen,true);
-		 auto tmp = (double)(rand() % 6 + 3)/10;
-		 meteoroTemporal->sprite.setScale(tmp,tmp);
-		 meteoroTemporal->actualizarPeso();
-		 sf::FloatRect boundingBox = meteoroTemporal->sprite.getGlobalBounds();
-	     meteoroTemporal->sprite.setOrigin(meteoroTemporal->sprite.getScale().x*83,meteoroTemporal->sprite.getScale().y*80);
-	     do{
+	    Meteoro* meteoroTemporal = new Meteoro();
+	    meteoroTemporal->aceleracion=0;
+	    meteoroTemporal->velocidad=1;
+	    meteoroTemporal->hora_creacion=deltaTime;
+	    meteoroTemporal->imagen.loadFromFile("graphics/Asteroid01.png");
+		meteoroTemporal->sprite.setTexture(meteoroTemporal->imagen,true);
+		auto tmp = (double)(rand() % 6 + 3)/10;
+		meteoroTemporal->sprite.setScale(tmp,tmp);
+	    meteoroTemporal->actualizarPeso();
+		sf::FloatRect boundingBox = meteoroTemporal->sprite.getGlobalBounds();
+	    meteoroTemporal->sprite.setOrigin(meteoroTemporal->sprite.getScale().x*83,meteoroTemporal->sprite.getScale().y*80);
+	    do{
 		meteoroTemporal->sprite.setPosition(sf::Vector2f( (rand()%800)+1 , (rand()%800)+1 ));
-		 
+		meteoroTemporal->posicionInicial= meteoroTemporal->sprite.getPosition();
 		}
 		while(!posicionSinChocar(meteoroTemporal->sprite.getGlobalBounds()));
-		 sf::Vector2f puntoEnPantalla = sf::Vector2f(400, 300);
-		 auto direccionFinal = (atan(
-		 meteoroTemporal->sprite.getPosition().y - puntoEnPantalla.x
+		sf::Vector2f puntoEnPantalla = sf::Vector2f(400, 300);
+		auto direccionFinal = (atan(
+		meteoroTemporal->sprite.getPosition().y - puntoEnPantalla.x
 		 /
-		 meteoroTemporal->sprite.getPosition().x - puntoEnPantalla.y)*180)/M_PI;
-		 meteoroTemporal->sprite.setRotation(direccionFinal);
-		 meteoroTemporal->direccion = direccionFinal;
-		 
+		meteoroTemporal->sprite.getPosition().x - puntoEnPantalla.y)*180)/M_PI;
+		meteoroTemporal->sprite.setRotation(direccionFinal);
+		meteoroTemporal->direccion = direccionFinal;
+		meteoroTemporal->ancho=167;
+		meteoroTemporal->alto=160;
+		meteoroTemporal->actualizarPeso();
 	
-		 meteoritosSprites.push_back(meteoroTemporal);	
+		meteoritosSprites.push_back(meteoroTemporal);	
 	}
 }
-int GameManager::inicializarNavePrincipal(){
+int GameManager::inicializarNavePrincipal(float deltaTime){
 	/*inicializar nave principal*/
+	navePrincipal->hora_creacion= deltaTime;
     navePrincipal->tiempoUltimoMisilLanzado=(float)0;
     navePrincipal->tipo=1;
     navePrincipal->aceleracion=0;
+    navePrincipal->velocidad=0;
     navePrincipal->sprite.setTexture(navePrincipal->imagen, true);
     navePrincipal->vidas = 48;
     navePrincipal->sprite.setScale(0.7f,0.7f);
+    navePrincipal->alto=89;
+    navePrincipal->ancho=114;
     navePrincipal->actualizarPeso();
     navePrincipal->velocidadRecargaMetralla=1000;
     navePrincipal->sprite.setOrigin(52,45);
 	navePrincipal->sprite.setPosition(700,500);
+	navePrincipal->posicionInicial=sf::Vector2f(700,500);
 }
-
-bool GameManager::Initialize()
-{
+void GameManager::inicializarMenuPausa(){
 	this->menuInicial=new MenuInicial((float)800,(float)600);
+	this->menuInicial->adicionarTexto("Continuar");
+	this->menuInicial->adicionarTexto("Terminar Partida");
+	this->menuInicial->inicializar();
+}
+bool GameManager::Initialize(float deltaTime)
+{
+	
+	inicializarMenuPausa();
 	this->estado=0;
-	this->cantNavesEnemigas=3;
+	this->puntosNaves=0;
+	this->cantNavesEnemigas=2;
 	this->pantalla.top=0;
 	this->pantalla.left=0;
 	this->pantalla.width=800;
@@ -490,8 +531,8 @@ bool GameManager::Initialize()
     planetoideSprite.setTexture(planetoideImg, true);
     planetoideSprite.setPosition(-100, 200);
     backgroundSprite.setTexture(backgroundImg, true);
-    inicializarAsteroides(this->numAsteroides);
-    inicializarNavePrincipal();
+    inicializarAsteroides(this->numAsteroides, deltaTime);
+    inicializarNavePrincipal(deltaTime);
 	backgroundSprite.setScale(0.5f, 0.5f);
 	
 	
@@ -499,11 +540,15 @@ bool GameManager::Initialize()
 	return false;
 	// Create a text
 	text.setFont(font); // font is a sf::Font
-    text.setString("Vidas: " + std::to_string(navePrincipal->vidas));
 	text.setCharacterSize(30);
 	text.setStyle(sf::Text::Bold);
-	text.setColor(sf::Color::Blue);
-	 inicializarNaves();
+	text.setColor(sf::Color::Red);
+	text2.setFont(font); // font is a sf::Font
+	text2.setCharacterSize(30);
+	text2.setStyle(sf::Text::Bold);
+	text2.setColor(sf::Color::Red);
+	 inicializarNaves(deltaTime);
+	 this->barraVidaNavePrincipal=new BarraProgreso(sf::Color::Blue,sf::Color(255,69,0),sf::Color::Red, sf::Color::Red, sf::Vector2f(100, 20), sf::Vector2f(20, 20), this->navePrincipal->vidas);
 	/*iniciamos el rectangulo pantalla*/
 	
     return true;
@@ -520,17 +565,18 @@ void GameManager::UpdateGame(float deltaTime, sf::Event event)
 	
 if(this->estado==0	){
 this->deltaTime=deltaTime;
-moverAsteroides();
-moverMisiles();
-moverNave(*(this->navePrincipal));
+moverAsteroides(deltaTime);
+moverMisiles(deltaTime);
+moverNave(*(this->navePrincipal), deltaTime);
 moverNaves(deltaTime);
-inicializarAsteroides(this->numAsteroides);
-inicializarNaves();
+inicializarAsteroides(this->numAsteroides, deltaTime);
+inicializarNaves(deltaTime);
 colisionMisilesNave(deltaTime, *navePrincipal);
 colisionNaveMeteoro(deltaTime, *navePrincipal);
 colisionMisilMeteoro(deltaTime);
 colisionMeteoroMeteoro();
 colisionNaveNave(deltaTime);
+this->barraVidaNavePrincipal->update(this->navePrincipal->vidas);
 }
 
 
@@ -541,7 +587,7 @@ if (event.type == sf::Event::KeyPressed)
 }
 }
 
-void GameManager::moverNave(Nave& nave)
+void GameManager::moverNave(Nave& nave, float deltaTime)
 {
 	int dimencion = limitePantalla(nave.sprite.getGlobalBounds());
 	if(dimencion!=1)
@@ -549,7 +595,7 @@ void GameManager::moverNave(Nave& nave)
 		nave.sprite.setPosition(this->teletransportarDimencion1(nave.sprite.getPosition(), dimencion));
 	}
 	
-	nave.sprite.move(navePrincipal->aceleracion*cos(nave.direccion*3.14159265/180),nave.aceleracion*sin(nave.direccion*3.14159265/180));
+	nave.Update(deltaTime);
 
 }
 
@@ -567,17 +613,17 @@ void GameManager::teclasAccion(sf::Event event, float deltatime)
 		 * */
 	if(this->estado==0){
 		if(event.key.code == 73){
-		navePrincipal->aceleracion += 0.03;
+		navePrincipal->velocidad += 0.03;
 		navePrincipal->direccion=navePrincipal->sprite.getRotation();
 		}
 		if(event.key.code == 74)
-		navePrincipal->aceleracion = navePrincipal->aceleracion - 0.01;
+		navePrincipal->velocidad = navePrincipal->velocidad - 0.03;
 		
 		switch(event.key.code){
 			case 85: this->estado=3;break;
 			case 72: navePrincipal->sprite.rotate(7); navePrincipal->rotar(7);break;
 			case 71: navePrincipal->sprite.rotate(-7);navePrincipal->rotar(-7);break;
-			case 37: crearMisil(*navePrincipal, 10000, 1, navePrincipal->aceleracion, navePrincipal->sprite.getRotation(), navePrincipal->sprite.getPosition() , deltatime);break;
+			case 37: crearMisil(*navePrincipal, 10000, 1, navePrincipal->velocidad, navePrincipal->sprite.getRotation(), navePrincipal->sprite.getPosition() , deltatime);break;
 			default : break;
 		}
 	}
@@ -625,8 +671,9 @@ void GameManager::DrawGame(float deltaTime)
     dibujarMisiles();
     dibujarNaves();
     dibujarExplociones(deltaTime);
-    renderWindow.draw(text);
+    this->barraVidaNavePrincipal->draw(renderWindow);
     renderWindow.display();
+
 }
 
   if(this->estado==3){
@@ -643,9 +690,12 @@ void GameManager::DrawGame(float deltaTime)
 	backgroundImg.loadFromFile("graphics/game_over1.bmp");
 	backgroundSprite.setPosition(sf::Vector2f(300, 300));
 	//renderWindow.draw(backgroundSprite);
-	text.setPosition(sf::Vector2f(20, 200));
+	text.setPosition(sf::Vector2f(70, 100));
+	text2.setPosition(sf::Vector2f(130, 200));
 	text.setString("Total de puntos por asteroides destruidos: " + std::to_string(puntosAsteroide));
+	text2.setString("Total de puntos por naves destruidas: " + std::to_string(puntosNaves));
 	renderWindow.draw(text);
+	renderWindow.draw(text2);
 	//renderWindow.display();
 	renderWindow.display();
 

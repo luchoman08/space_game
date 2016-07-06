@@ -8,16 +8,16 @@ int main()
     sf::RenderWindow app(sf::VideoMode(800, 600), "Space Game");
 
     GameManager gameManager(app);
+   sf::Clock deltaClock;
 
-    if (!gameManager.Initialize())
+    if (!gameManager.Initialize(deltaClock.getElapsedTime().asMilliseconds()))
     {
         std::cout << "Failure loading graphics." << std::endl;
         return EXIT_FAILURE;
     }
 	app.setFramerateLimit (150); // Limit to 60 frames per second
     // Clock used to calculate the delta time
-    sf::Clock deltaClock;
-
+ 
 	// Start the game loop
     while (app.isOpen())
     {

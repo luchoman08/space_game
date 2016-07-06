@@ -5,11 +5,11 @@ Misil::Misil(){
 	
 };
 
-Misil::Misil(Nave* naveCreadora, int tipo, float duracion, double aceleracion, float hora_creacion){
+Misil::Misil(Nave* naveCreadora, int tipo, float duracion, double velocidad, float hora_creacion){
 	this-> naveCreadora = naveCreadora;
 	this->duracion = duracion;
 	this->hora_creacion=hora_creacion;
-	this->aceleracion=aceleracion; 
+	this->velocidad=velocidad; 
 	this->tipo = tipo;
 	};
 
