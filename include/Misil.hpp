@@ -12,6 +12,7 @@ class Misil:public GameObject{
 	float hora_creacion;
 	float duracion; //tiempo en milisegundos que durara el misil dando vueltas	
 	int tipo;//1 si es de la nave principal, 2 si es de la nave enemiga
+	bool powerShot;
 	Nave* naveCreadora;
 	private:
 		

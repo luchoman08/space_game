@@ -16,10 +16,12 @@ class GameManager
 		MenuInicial *menuInicial;
 		MenuInicial *menuFinal;
 		MenuInicial *opciones;
+		MenuInicial *cantMeteoros;
+		MenuInicial *cantNaves;
 		void actualizarBarraVidaPrincipal();
-		int estado; //0 si esta normal, -1 si la nave perdio las vidas, 3 si esta pausado, 2 si esta en el menu inicial, 4 menu de opciones, 5 cantidad naves, 6 cantidad de meteoros
-		int numAsteroides;
-		int cantNavesEnemigas;
+		int estado; //0 si esta normal, -2 si se salio de la app, -1 si la nave perdio las vidas, 3 si esta pausado, 2 si esta en el menu inicial, 4 menu de opciones, 5 cantidad naves, 6 cantidad de meteoros
+		int numAsteroides=1;
+		int cantNavesEnemigas=1;
 		void inicializarNaves(float deltaTime);
 		int inicializarNavePrincipal(float deltaTime);
 		void moverNaves(float deltaTime); //mueve, elimina y lanza los misiles de las nave enemigas y detecta colisiones con los misiles
@@ -37,7 +39,7 @@ class GameManager
         void eliminarExplociones();
         void FreeResources();
         void teclasAccion(sf::Event event ,float deltaTime);
-        void UpdateGame(float deltaTime,  sf::Event event);
+        int UpdateGame(float deltaTime,  sf::Event event);
         void DrawGame(float deltaTime);
         void DibujarAsteroides();
         void moverAsteroides(float deltaTime);//mueve los asteroides, los remueve si estan en una misma posicion que otro asteroide
@@ -65,6 +67,8 @@ class GameManager
         void inicializarMenuPausa();
         void inicializarMenuInicial();
         void inicializarMenuOpciones();
+        void inicializarMenuCantMeteoros();
+        void inicializarMenuCantNavesEnemigas();
         sf::Vector2f teletransportarDimencion1(sf::Vector2f poscionActual, int dimencion);//retorna a los objetos a la primera dimencion con su misma direccion
     protected:
     
@@ -76,14 +80,18 @@ class GameManager
 		sf::Text text;
 		sf::Text text2;
 		Nave* navePrincipal;
+		GameObject* propulsion;
         sf::RenderWindow & renderWindow;
         std::vector <Meteoro*> meteoritosSprites;
         std::vector <Misil*> misiles;
         std::vector <Nave*> naves;
         sf::Texture backgroundImg;
         sf::Texture proyectilImg;
+        sf::Texture proyectilRecargado;
         sf::Texture proyectilEnemigoImg;
         sf::Texture naveEnemigaImg;
+        sf::Texture navePrincipalAcelerate;
+        sf::Texture navePrincipalImg;
         sf::Sprite backgroundSprite;
         std::vector <ObjetoExplocion*> explociones;
         /*rectangulo que representa la pantalla*/
@@ -95,6 +103,7 @@ class GameManager
 		sf::FloatRect* dimencion5;
 		sf::Texture planetoideImg;
 		sf::Sprite planetoideSprite;
+		
 };
 
 #endif // GAMEMANAGER_H

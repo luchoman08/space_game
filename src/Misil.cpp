@@ -11,6 +11,7 @@ Misil::Misil(Nave* naveCreadora, int tipo, float duracion, double velocidad, flo
 	this->hora_creacion=hora_creacion;
 	this->velocidad=velocidad; 
 	this->tipo = tipo;
+	this->powerShot=false;
 	};
 
 

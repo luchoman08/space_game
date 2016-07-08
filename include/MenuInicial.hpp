@@ -12,9 +12,16 @@ public:
 	~MenuInicial();
 	void inicializar();
 	void draw(sf::RenderWindow &window);
-	void MoveUp();
-	void MoveDown();
-	int GetPressedItem() { return selectedItemIndex; }
+	void MoveUp(float deltaTime);
+	void MoveDown(float deltaTime);
+	float hora_activacion=0;
+	float tiempoActivacion = 400;
+	int GetPressedItem(float deltaTime) {
+		if(deltaTime-hora_activacion>tiempoActivacion)
+		 return selectedItemIndex;
+		 
+		 else
+		 return -50; }
 	void adicionarTexto(std::string texto);
 private:
 	int selectedItemIndex;

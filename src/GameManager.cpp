@@ -244,7 +244,7 @@ void GameManager::colisionMisilesNave(float deltaTime, Nave& nave){
 		    if(&nave == this->navePrincipal){
 		    text.setString("Vidas: " + std::to_string(navePrincipal->vidas));
 			}
-		    
+		    if(!misiles.at(m)->powerShot){
 		    sf::Vector2f temporal = nave.sprite.getPosition();
 		    nave.direccion=misiles.at(m)->sprite.getRotation();		
 		    nave.sprite.setPosition(temporal);	
@@ -262,10 +262,30 @@ void GameManager::colisionMisilesNave(float deltaTime, Nave& nave){
 		    }
 			m = numeroMisiles;
 		}
-
+			else{
+				    nave.vidas=0;
+		    
+		    sf::Vector2f temporal = nave.sprite.getPosition();
+		    nave.direccion=misiles.at(m)->sprite.getRotation();		
+		    nave.sprite.setPosition(temporal);	
+			if(nave.vidas<=0){
+			
+				if(&nave!=navePrincipal){
+				nuevaExplocion(deltaTime, 0 , nave.sprite);	
+				this->puntosNaves++;
+				}
+				else{
+				nuevaExplocion(deltaTime, 1 , nave.sprite);	
+				}
+		    }
+		
+	}
 	}
 
 	}
+	
+}
+	
 
 
 void GameManager::colisionMisilMeteoro(float deltaTime){
@@ -275,7 +295,8 @@ void GameManager::colisionMisilMeteoro(float deltaTime){
 	{
 		for(int c =0; c<numeroMeteoros; c++)
 	{
-		if (misiles.at(m)->sprite.getGlobalBounds().intersects(meteoritosSprites.at(c)->sprite.getGlobalBounds())){			
+		if (misiles.at(m)->sprite.getGlobalBounds().intersects(meteoritosSprites.at(c)->sprite.getGlobalBounds())){
+			if(!misiles.at(m)->powerShot){
 		    meteoritosSprites.at(c)->puntos_vida--;
 		   
 
@@ -300,11 +321,25 @@ void GameManager::colisionMisilMeteoro(float deltaTime){
 		    c = numeroMeteoros;
 			m = numeroMisiles;
 		}
+		else{
+			meteoritosSprites.at(c)->puntos_vida=0;
 
+			nuevaExplocion(deltaTime, 1, meteoritosSprites.at(c)->sprite);
+			meteoritosSprites.erase(meteoritosSprites.begin()+c);			
+			if(misiles.at(m)->tipo==1)		
+			puntosAsteroide++;
+			numeroMisiles = misiles.size();
+		    numeroMeteoros=meteoritosSprites.size();
+		    c = numeroMeteoros;
+			m = numeroMisiles;
+		}
+		}
 	}
 
 	}
-}
+
+	}
+
 void GameManager::eliminarNaves(){
 	for (int i =0; i<naves.size(); i++)
 	{
@@ -335,10 +370,17 @@ void GameManager::crearMisil(Nave& nave, int duracion, int tipoNaveLanza, double
 	if(nave.tiempoUltimoMisilLanzado + nave.velocidadRecargaMetralla < deltaTime)
 	{
 	Misil* misil = new Misil(navePrincipal, tipoNaveLanza, duracion, velocidad+2, this->deltaTime); //arranca con minimo 2 de aceleracion, si ya se ha acelerado 
+	
+	
 	misil->imagen=proyectilImg;
 	switch(tipoNaveLanza){
 		case 1: misil->sprite.setTexture(proyectilImg,true);break;
 		case 2: misil->sprite.setTexture(proyectilEnemigoImg,true);break;
+	}
+	if(nave.tiempoCargaMisil>20)
+	{
+		misil->sprite.setTexture(proyectilRecargado,true);
+		misil->powerShot = true;
 	}
 	misil->hora_creacion = deltaTime;
     misil->sprite.setScale(0.5f, 0.5f);
@@ -532,16 +574,44 @@ void GameManager::inicializarMenuInicial(){
 	this->menuInicial->adicionarTexto("Salir");
 	this->menuInicial->inicializar();
 }
+void GameManager::inicializarMenuOpciones(){
+	this->opciones=new MenuInicial((float)800,(float)600);
+	this->opciones->adicionarTexto("Cantidad de naves enemigas");
+	this->opciones->adicionarTexto("Cantidad de meteoros");
+	this->opciones->adicionarTexto("Atras");
+	this->opciones->inicializar();
+}
+
+void GameManager::inicializarMenuCantMeteoros(){
+	this->cantMeteoros=new MenuInicial((float)800,(float)600);
+	this->cantMeteoros->adicionarTexto("0");
+	this->cantMeteoros->adicionarTexto("1");
+	this->cantMeteoros->adicionarTexto("2");
+	this->cantMeteoros->adicionarTexto("3");
+	this->cantMeteoros->adicionarTexto("4");
+	this->cantMeteoros->inicializar();
+}
+void GameManager::inicializarMenuCantNavesEnemigas(){
+	this->cantNaves=new MenuInicial((float)800,(float)600);
+	this->cantNaves->adicionarTexto("0");
+	this->cantNaves->adicionarTexto("1");
+	this->cantNaves->adicionarTexto("2");
+	this->cantNaves->adicionarTexto("3");
+	this->cantNaves->adicionarTexto("4");
+	this->cantNaves->inicializar();
+}
+
 bool GameManager::Initialize(float deltaTime)
 {
 	
 	this->navePrincipal= new Nave();
+	this->propulsion = new GameObject();
 	inicializarMenuPausa();
 	inicializarMenuInicial();
-	
+	inicializarMenuOpciones();
+	inicializarMenuCantMeteoros();
+	inicializarMenuCantNavesEnemigas();
 	this->puntosNaves=0;
-	this->cantNavesEnemigas=2;
-	this->numAsteroides=5;
 	this->pantalla.top=0;
 	this->pantalla.left=0;
 	this->pantalla.width=800;
@@ -554,6 +624,8 @@ bool GameManager::Initialize(float deltaTime)
         return false;
 	if (!proyectilImg.loadFromFile("graphics/Projectile05.png"))
         return false;
+    if (!proyectilRecargado.loadFromFile("graphics/Projectile06.png"))
+        return false;
     if (!navePrincipal->imagen.loadFromFile("graphics/Spaceship01.png"))
         return false;
     if (!backgroundImg.loadFromFile("graphics/Background.png"))
@@ -561,7 +633,12 @@ bool GameManager::Initialize(float deltaTime)
     if (!planetoideImg.loadFromFile("graphics/Planetoid.png"))
         return false;    
     if (!naveEnemigaImg.loadFromFile("graphics/Spaceship03.png"))
-        return false;   
+        return false; 
+   
+   if (!propulsion->imagen.loadFromFile("graphics/JetTrail.png"))
+        return false;
+        
+    propulsion->sprite.setTexture(propulsion->imagen, true);
     puntosAsteroide = 0; 
     puntosNaves = 0;
     planetoideSprite.setTexture(planetoideImg, true);
@@ -595,10 +672,10 @@ void GameManager::FreeResources()
 
 }
 
-void GameManager::UpdateGame(float deltaTime, sf::Event event)
+int GameManager::UpdateGame(float deltaTime, sf::Event event)
 {
 	
-	
+
 if(this->estado==0	){
 this->deltaTime=deltaTime;
 moverAsteroides(deltaTime);
@@ -613,14 +690,23 @@ colisionMisilMeteoro(deltaTime);
 colisionMeteoroMeteoro();
 colisionNaveNave(deltaTime);
 this->barraVidaNavePrincipal->update(this->navePrincipal->vidas);
-}
-
-
-
-if (event.type == sf::Event::KeyPressed)
+if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased )
 {
 		teclasAccion(event, deltaTime);        
 }
+return this->estado;
+}
+if(this->estado==-2)
+{
+	return -2;
+}
+
+
+if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased )
+{
+		teclasAccion(event, deltaTime);        
+}
+return this->estado;
 }
 
 void GameManager::moverNave(Nave& nave, float deltaTime)
@@ -648,22 +734,57 @@ void GameManager::teclasAccion(sf::Event event, float deltatime)
 		 * 74 = flecha_abajo
 		 * */
 	if(this->estado==0){
+		if(event.type==sf::Event::KeyReleased)
+		{
+			if(event.key.code==37){
+				
+				crearMisil(*navePrincipal, 10000, 1, navePrincipal->velocidad, navePrincipal->sprite.getRotation(), navePrincipal->sprite.getPosition() , deltatime);
+				this->navePrincipal->tiempoCargaMisil=0;
+			}
+			if(event.key.code == 73){
+				navePrincipal->aceleracion = 0;
+			}
+				if(event.key.code == 74){
+				navePrincipal->aceleracion = 0;
+			}
+			
+			/*if(event.key.code == 73){
+		navePrincipal->sprite.setTexture(navePrincipalAcelerate);
+		}*/
+		}
+		if(event.type == sf::Event::KeyPressed){
 		if(event.key.code == 73){
-		navePrincipal->velocidad += 0.03;
+		navePrincipal->aceleracion = 0.000007;
 		navePrincipal->direccion=navePrincipal->sprite.getRotation();
+		this->propulsion->sprite.setPosition(this->navePrincipal->sprite.getPosition());
+		this->propulsion->sprite.setOrigin(this->navePrincipal->sprite.getOrigin());
+		this->propulsion->Draw(this->renderWindow);
 		}
 		if(event.key.code == 74)
-		navePrincipal->velocidad = navePrincipal->velocidad - 0.03;
+		navePrincipal->aceleracion = - 0.000007;
 		
 		switch(event.key.code){
-			case 85: this->estado=3;break;
+			case 85: this->estado=3;
+			std::cout<<"Pausado"<<std::endl;
+			break;
 			case 72: navePrincipal->sprite.rotate(7); navePrincipal->rotar(7);break;
 			case 71: navePrincipal->sprite.rotate(-7);navePrincipal->rotar(-7);break;
-			case 37: crearMisil(*navePrincipal, 10000, 1, navePrincipal->velocidad, navePrincipal->sprite.getRotation(), navePrincipal->sprite.getPosition() , deltatime);break;
+			case 37:
+			//crearMisil(*navePrincipal, 10000, 1, navePrincipal->velocidad, navePrincipal->sprite.getRotation(), navePrincipal->sprite.getPosition() , deltatime);break;
+			navePrincipal->tiempoCargaMisil++;
 			default : break;
 		}
+
 	}
+}
+
+
+/*menu pausa*/
+
+	
 	if(this->estado==3){
+		
+		if(event.type == sf::Event::KeyPressed){
 		if(event.key.code==86){
 		this->estado=0;
 	}
@@ -671,17 +792,15 @@ void GameManager::teclasAccion(sf::Event event, float deltatime)
 				switch (event.key.code)
 				{
 				case 73:
-					this->menuPausa->MoveUp();
-					usleep(150000);
+					this->menuPausa->MoveUp(deltatime);
 					break;
 
 				case 74:
-					this->menuPausa->MoveDown();
-					usleep(150000);
+					this->menuPausa->MoveDown(deltatime);
 					break;
 	
 				case 37:
-					switch (this->menuPausa->GetPressedItem())
+					switch (this->menuPausa->GetPressedItem(deltatime))
 					{
 					case 0:
 						this->estado=0;
@@ -691,49 +810,56 @@ void GameManager::teclasAccion(sf::Event event, float deltatime)
 						eliminarMeteoros();
 						eliminarMisiles();
 						eliminarExplociones();
-						this->Initialize(deltaTime);
+						this->Initialize(deltatime);
 						this->estado=0;
 						break;
 					case 2:
-						this->estado=-1;
+						this->estado=2;
+						this->menuInicial->hora_activacion=deltatime;
+						break;
+					case 3:
+						this->estado=-2;
 						break;
 					default:break;
 				}
 
-			
+		}
 	}
 }
 /*menu inicial*/
+
+
 	if(this->estado==2){
-		
+		if(event.type == sf::Event::KeyPressed){
+
 				switch (event.key.code)
 				{
 				case 73:
-					this->menuInicial->MoveUp();
-					usleep(150000);
+					this->menuInicial->MoveUp(deltatime);
+					
 					break;
 
 				case 74:
-					this->menuInicial->MoveDown();
-					usleep(150000);
+					this->menuInicial->MoveDown(deltatime);
 					break;
 	
 				case 37:
-					switch (this->menuInicial->GetPressedItem())
+					switch (this->menuInicial->GetPressedItem(deltatime))
 					{
 					case 0:
 						eliminarNaves();
 						eliminarMeteoros();
 						eliminarMisiles();
 						eliminarExplociones();
-						this->Initialize(deltaTime);
+						this->Initialize(deltatime);
 						this->estado=0;
 						break;
 					case 1:
 						this->estado=4;
+						this->opciones->hora_activacion=deltatime;
 						break;
 					case 2:
-						this->estado=-1;
+						this->estado=-2;
 						break;
 					default:break;
 				}
@@ -741,7 +867,109 @@ void GameManager::teclasAccion(sf::Event event, float deltatime)
 			
 	}
 }
+}
 
+/*menu opciones*/
+
+	if(this->estado==4){
+		
+		if(event.type == sf::Event::KeyPressed){
+				switch (event.key.code)
+				{
+				case 73:
+					this->opciones->MoveUp(deltatime);
+					break;
+
+				case 74:
+					this->opciones->MoveDown(deltatime);
+					break;
+	
+				case 37:
+					switch (this->opciones->GetPressedItem(deltatime))
+					{
+					case 0:
+						this->estado=5;
+						this->cantNaves->hora_activacion=deltatime;
+						break;
+					case 1:
+						this->estado=6;
+						this->cantMeteoros->hora_activacion=deltatime;
+						break;
+					case 2:
+						this->estado=2;
+						this->menuInicial->hora_activacion=deltatime;
+						break;
+					default:break;
+				}
+
+			
+	}
+}
+}
+
+/*menu cantMeteoros*/
+
+
+	if(this->estado==6){
+		if(event.type == sf::Event::KeyPressed){
+
+				switch (event.key.code)
+				{
+				case 73:
+					this->cantMeteoros->MoveUp(deltatime);
+					break;
+
+				case 74:
+					this->cantMeteoros->MoveDown(deltatime);
+					break;
+	
+				case 37:
+					
+					if(this->cantMeteoros->GetPressedItem(deltatime)!=-50){
+					this->numAsteroides=this->cantMeteoros->GetPressedItem(deltatime);
+					
+					this->estado=4;;
+					this->opciones->hora_activacion=deltatime;
+					}
+					break;
+					
+
+			
+	}
+}
+}
+
+/*menu cantNavesEnemigas*/
+
+
+	if(this->estado==5){
+		if(event.type == sf::Event::KeyPressed){
+
+				switch (event.key.code)
+				{
+				case 73:
+					this->cantNaves->MoveUp(deltatime);
+					break;
+
+				case 74:
+					this->cantNaves->MoveDown(deltatime);
+					break;
+	
+				case 37:
+					
+					if(this->cantNaves->GetPressedItem(deltatime)!=-50){
+					this->cantNavesEnemigas=this->cantNaves->GetPressedItem(deltatime);
+					
+					this->estado=4;;
+					this->opciones->hora_activacion=deltatime;
+					}
+					break;
+					
+
+			
+	}
+}
+}
 
 }
 void GameManager::DrawGame(float deltaTime)
@@ -752,6 +980,10 @@ void GameManager::DrawGame(float deltaTime)
     DibujarAsteroides();
     dibujarMisiles();
     dibujarNaves();
+    //this->propulsion->sprite.setPosition(this->navePrincipal->sprite.getPosition());
+   // this->propulsion->sprite.setOrigin(this->navePrincipal->sprite.getOrigin().x +35, this->navePrincipal->sprite.getOrigin().y-22 );
+   // this->propulsion->sprite.setRotation(this->navePrincipal->sprite.getRotation());
+    //this->propulsion->Draw(renderWindow);
     dibujarExplociones(deltaTime);
     this->barraVidaNavePrincipal->draw(renderWindow);
     renderWindow.display();
@@ -771,16 +1003,35 @@ void GameManager::DrawGame(float deltaTime)
 	renderWindow.draw(planetoideSprite);
     renderWindow.display();
 }
+  if(this->estado==4){
+    renderWindow.draw(backgroundSprite);
+	this->opciones->draw(renderWindow);
+	renderWindow.draw(planetoideSprite);
+    renderWindow.display();
+}
+  if(this->estado==5){
+    renderWindow.draw(backgroundSprite);
+	this->cantNaves->draw(renderWindow);
+	renderWindow.draw(planetoideSprite);
+    renderWindow.display();
+}
+  if(this->estado==6){
+    renderWindow.draw(backgroundSprite);
+	this->cantMeteoros->draw(renderWindow);
+	renderWindow.draw(planetoideSprite);
+    renderWindow.display();
+}
 	if(this->estado==-1){
 	renderWindow.draw(backgroundSprite);
 	dibujarExplociones(deltaTime);
 	backgroundImg.loadFromFile("graphics/game_over1.bmp");
 	backgroundSprite.setPosition(sf::Vector2f(300, 300));
 	//renderWindow.draw(backgroundSprite);
-	text.setPosition(sf::Vector2f(70, 100));
-	text2.setPosition(sf::Vector2f(130, 200));
+	text.setPosition(sf::Vector2f(50, 100));
+	text2.setPosition(sf::Vector2f(110, 200));
 	text.setString("Total de puntos por asteroides destruidos: " + std::to_string(puntosAsteroide));
 	text2.setString("Total de puntos por naves destruidas: " + std::to_string(puntosNaves));
+	
 	renderWindow.draw(text);
 	renderWindow.draw(text2);
 	//renderWindow.display();

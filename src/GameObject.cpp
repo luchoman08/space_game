@@ -29,23 +29,8 @@ void GameObject::actualizarVelocidad(float hora_actual){
 
 }
 void GameObject::actualizarPosicion(float hora_actual){
-	std::cout<<(hora_actual - this->hora_creacion)<<std::endl;
+
 	this->sprite.move(this->velocidad * cos((this->direccion*M_PI)/180),
 					  this->velocidad * sin((this->direccion*M_PI)/180)); // newPosition, oldPosition, velocity como vectores
 }
-//~ void GameObject::actualizarPosicion(float hora_actual){
-	//~ this->sprite.move(this->velocidad * ((hora_actual - this->hora_creacion)/1000) * cos(this->direccion),
-					  //~ this->velocidad * ((hora_actual - this->hora_creacion)/1000) * sin(this->direccion)); // newPosition, oldPosition, velocity como vectores
-//~ }
 
-
-//~ void GameObject::actualizarPosicion(float hora_actual){
-	//~ this->sprite.setPosition(this->posicionInicial.x + ((this->velocidad * (hora_actual - hora_creacion))*(double)fabs(cos((this->direccion)*M_PI)/180)) ,
-					         //~ this->posicionInicial.y + ((this->velocidad * (hora_actual - hora_creacion))*(double)fabs(sin((this->direccion)*M_PI)/180))); // newPosition, oldPosition, velocity como vectores
-					         
-					         
-					         
-					        //~ std::cout << "resultado x: " << this->posicionInicial.x + ((this->velocidad * (hora_actual - hora_creacion))*(double)fabs(cos((this->direccion)*M_PI)/180))<<std::endl;
-					        //~ std::cout << "resultado x: " << this->posicionInicial.x + ((this->velocidad * (hora_actual - hora_creacion))*(double)fabs(sin((this->direccion)*M_PI)/180))<<std::endl;
-					       //~ //  std::cout << "resultado fabs: " <<  this->posicionInicial.y + (float)((this->velocidad * (hora_actual - hora_creacion))*(double)fabs(sin((this->sprite.getRotation())*M_PI)/180)) <<std::endl;
-//~ }

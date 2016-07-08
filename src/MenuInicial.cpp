@@ -1,5 +1,5 @@
 #include "../include/MenuInicial.hpp"
-
+#include <iostream>
 
 MenuInicial::MenuInicial(float width, float height)
 {
@@ -7,7 +7,6 @@ MenuInicial::MenuInicial(float width, float height)
 	{
 		// handle error
 	}
-
 	this->width=width;
 	this->height=height;
 	selectedItemIndex = 1;
@@ -49,24 +48,28 @@ void MenuInicial::draw(sf::RenderWindow &window)
 	}
 }
 
-void MenuInicial::MoveUp()
+void MenuInicial::MoveUp(float deltaTime)
 {
-
+		if(deltaTime-hora_activacion>tiempoActivacion){
 		menuVector.at(selectedItemIndex)->setColor(sf::Color::White);
 		selectedItemIndex=(selectedItemIndex-1);
 		if(selectedItemIndex<0)
 		selectedItemIndex=menuVector.size()-1;
 		menuVector.at(selectedItemIndex)->setColor(sf::Color::Red);
+		hora_activacion=deltaTime;
+	}
 	
 }
 
-void MenuInicial::MoveDown()
+void MenuInicial::MoveDown(float deltaTime)
 {
-	
+	std::cout<<deltaTime<< std::endl;
+		if(deltaTime-hora_activacion>tiempoActivacion){
 		menuVector.at(selectedItemIndex)->setColor(sf::Color::White);
 		selectedItemIndex=(selectedItemIndex+1)%(menuVector.size());
 		menuVector.at(selectedItemIndex)->setColor(sf::Color::Red);
-	
+		hora_activacion=deltaTime;
+	}
 }
 
 void MenuInicial::adicionarTexto(std::string texto){

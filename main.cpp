@@ -17,7 +17,7 @@ int main()
     }
 	app.setFramerateLimit (150); // Limit to 60 frames per second
     // Clock used to calculate the delta time
- 
+
 	// Start the game loop
     while (app.isOpen())
     {
@@ -33,7 +33,9 @@ int main()
         float elapsedTime = deltaClock.getElapsedTime().asMilliseconds();
 
 
-         gameManager.UpdateGame(elapsedTime, event);
+        if( gameManager.UpdateGame(elapsedTime, event)==-2){
+			app.close();
+		}
         // Clear screen
         app.clear();
 
